@@ -31,6 +31,7 @@ class PDFDocument
         @initFonts()
         @initText()
         @initImages()
+        @initTable()
         
         # Create the metadata
         @_info = @ref
@@ -56,6 +57,7 @@ class PDFDocument
     mixin 'vector'
     mixin 'fonts'
     mixin 'text'
+    mixin 'table'
     mixin 'images'
     mixin 'annotations'
         

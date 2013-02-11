@@ -1,49 +1,105 @@
+# Add table support
+# 
+# doc.table(20, 20, 
+#         [
+#             {
+#                 name: 'first',
+#                 amount: '$0.00'
+#             },
+#             {
+#                 name: 'second',
+#                 amount: '$0.00'
+#             }
+#         ],
+#         {
+#             name: {
+#               label: 'name',
+#               width: 100
+#             },
+#             amount: {
+#               label: 'amount',
+#               width: 100
+#             }
+#         }
+# )
 
-module.exports = 
+module.exports =
     initTable: ->
         # Current coordinates
         @tx = 0
         @ty = 0
 
-        # Last added line coordinates
-        @last_col = {
+        # Cotain row data
+        @data = []
+
+        @options = {
+          row_size: 20 # TODO: Get font width
+        }
+
+        # Carriage for printing each table element in it's place
+        @carriage = {
             x: @tx,
             y: @ty
         }
 
-        # Cotain row data
-        @data = []
-
-        # Contain cols definition
-        @definition = {}
+        # Contain cols cols definition
+        @cols_definition = {}
 
         return this
-    
+
+
+    _initCarriage: () ->
+        @carriage = {
+            x: @tx,
+            y: @ty
+        }
+
+    # Indent carriage
+    _indent: ( indent ) ->
+        @carriage.x += indent
+
+    # Move carriage to new line
+    _return: () ->
+        if ( @carriage.y + @options.row_size ) > this.page.height
+            @addPage()
+            @_initCarriage()
+        else
+            @carriage.y += @options.row_size # TODO: Calculate from text
+            @carriage.x = @tx
+
     _theader: () ->
 
-        header_x_position = @tx
-        header_y_position = @ty
-
         # Loop Col Definitions
-        for id, col of @definition
-            added_col = this.text col.label, header_x_position, header_y_position
-            header_x_position += col.width
+        for id, col of @cols_definition
+            added_col = this.text col.label, @carriage.x, @carriage.y
+            @_indent col.width
+
+        @_return()              
 
     _tbody: () ->
 
-        body_x_position = @tx
-        body_y_position = @last_col.y or @ty
+        @_rows @data
 
-        # Loop Row Data
-        for row in @data
-            body_x_position = @tx
-            body_y_position = (@last_col.y or @ty) + @options.row_size
-            # Loop Col Definitions
-            for id, col of @definition
-                @last_col = this.text row[id], body_x_position, body_y_position
-                body_x_position += col.width
+    _rows: ( data ) ->
 
-    table: (x, y, data = [], definition = {}, options = {}) ->
+        # Loop Rows
+        for row in data
+            @_row row
+            @_return()
+
+    _row: ( row ) ->
+
+        # Loop Col Definitions
+        for id, column_options of @cols_definition
+            @_col row[id], column_options
+            @_indent column_options.width
+
+    _col: ( value, column_options ) ->
+
+        # Print Column
+        this.text value, @carriage.x, @carriage.y
+
+    table: ( x, y, data = [], cols_definition, options ) ->
 
         # Update the current position
         if x? or y?
@@ -51,10 +107,15 @@ module.exports =
             @ty = y or @ty
 
         # Assign options and data to instance
+        ## Rows
         @data = data
-        @definition = definition
-        @options = options
+        ## Cols
+        @cols_definition = cols_definition  if cols_definition?
+        ## Other Options
+        @options = options if options?
 
+        # Setup Carriage
+        @_initCarriage()
 
         # Build Table Header
         @_theader()

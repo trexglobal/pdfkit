@@ -34,6 +34,7 @@ module.exports =
 
         @options = {
           row_size: 20 # TODO: Get font width
+          new_page: {} # New page table position
         }
 
         # Carriage for printing each table element in it's place
@@ -47,12 +48,24 @@ module.exports =
 
         return this
 
+    # Set carriage for first and new page position
+    _initCarriage: ( newPage = false ) ->
 
-    _initCarriage: () ->
-        @carriage = {
-            x: @tx,
-            y: @ty
-        }
+        if newPage
+
+            @addPage()
+
+            @carriage = {
+                x: @tx,
+                y: @options.row_size
+            }
+
+        else
+
+            @carriage = {
+                x: @tx,
+                y: @ty
+            }
 
     # Indent carriage
     _indent: ( indent ) ->
@@ -60,10 +73,15 @@ module.exports =
 
     # Move carriage to new line
     _return: () ->
-        if ( @carriage.y + @options.row_size ) > this.page.height
-            @addPage()
-            @_initCarriage()
+
+        # New Page
+        if ( @carriage.y + @options.row_size*2 ) > this.page.height
+            
+            @_initCarriage(true)
+
+        # Normal Return
         else
+
             @carriage.y += @options.row_size # TODO: Calculate from text
             @carriage.x = @tx
 
@@ -112,7 +130,7 @@ module.exports =
         ## Cols
         @cols_definition = cols_definition  if cols_definition?
         ## Other Options
-        @options = options if options?
+        @options extends options
 
         # Setup Carriage
         @_initCarriage()

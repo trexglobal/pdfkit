@@ -1,6 +1,6 @@
 # Add table support
-# 
-# doc.table(20, 20, 
+#
+# doc.table(20, 20,
 #         [
 #             {
 #                 name: 'first',
@@ -29,11 +29,13 @@ module.exports =
         @tx = 0
         @ty = 0
 
+        # Track new line Y
+        @_newLineY = 0
+
         # Cotain row data
         @data = []
 
         @options = {
-          row_size: 20 # TODO: Get font width
           new_page: {} # New page table position
         }
 
@@ -57,7 +59,7 @@ module.exports =
 
             @carriage = {
                 x: @tx,
-                y: @options.row_size
+                y: @currentLineHeight(true)
             }
 
         else
@@ -71,28 +73,37 @@ module.exports =
     _indent: ( indent ) ->
         @carriage.x += indent
 
+        # Keep current col next line position
+        # if it's bigger than previous col
+        if @y > @_newLineY
+            @_newLineY = @y
+
     # Move carriage to new line
     _return: () ->
 
         # New Page
-        if ( @carriage.y + @options.row_size*2 ) > this.page.height
-            
+        # TODO: Fix issue when mutiline col is at the end of page
+        if ( @_newLineY + @currentLineHeight(true)*2 ) > this.page.height
+
             @_initCarriage(true)
 
         # Normal Return
         else
 
-            @carriage.y += @options.row_size # TODO: Calculate from text
+            @carriage.y = @_newLineY
             @carriage.x = @tx
 
     _theader: () ->
 
         # Loop Col Definitions
         for id, col of @cols_definition
-            added_col = this.text col.label, @carriage.x, @carriage.y
+            added_col = this.text col.label, @carriage.x, @carriage.y,
+                width: col.width
+                align: col.align
+
             @_indent col.width
 
-        @_return()              
+        @_return()
 
     _tbody: () ->
 
@@ -114,8 +125,13 @@ module.exports =
 
     _col: ( value, column_options ) ->
 
+        # Get col static value
+        col_value = value || column_options.value
+
         # Print Column
-        this.text value, @carriage.x, @carriage.y
+        this.text col_value, @carriage.x, @carriage.y,
+            width: column_options.width
+            align: column_options.align
 
     table: ( x, y, data = [], cols_definition, options ) ->
 

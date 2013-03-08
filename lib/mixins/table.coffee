@@ -126,7 +126,7 @@ module.exports =
     _col: ( value, column_options ) ->
 
         # Get col static value
-        col_value = value || column_options.value
+        col_value = value || column_options.value || ''
 
         # Print Column
         this.text col_value, @carriage.x, @carriage.y,

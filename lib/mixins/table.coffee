@@ -128,6 +128,10 @@ module.exports =
         # Get col static value
         col_value = value || column_options.value || ''
 
+        # Prevent white space which is causing issues in Acrobat Reader
+        if String(col_value).replace(/^\s+|\s+$/g,'') == ''
+            col_value = ''
+
         # Print Column
         this.text col_value, @carriage.x, @carriage.y,
             width: column_options.width

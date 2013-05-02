@@ -62,6 +62,8 @@ module.exports =
                 y: @currentLineHeight(true)
             }
 
+            @_newLineY = 0
+
         else
 
             @carriage = {
